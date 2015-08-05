@@ -5,8 +5,13 @@
 #define ASSERT_REACHED(str) \
     do { \
         struct ARLine {  \
-            static size_t line() { return __LINE__; } \
-            static const char* msg() { return str; } \
+            static void check() { \
+                if (AR::reached[LX::value<>::size()]) { \
+                    std::cerr << "Reached: " << str << " - " << __FILE__ << ":" << __LINE__ << "\n"; \
+                } else { \
+                    std::cerr << "Failed to reach: " << str << " - " << __FILE__ << ":" << __LINE__ << "\n"; \
+                } \
+            } \
         }; \
         AR::reached[LX::value<>::size()] = true; \
         LX::push<ARLine>(); \
@@ -18,25 +23,17 @@ struct AR { \
     static bool reached[]; \
     ~AR(); \
 }; \
-using LX = atch::meta_list<class Example>;
+using LX = atch::meta_list<AR>;
 
 #define ASSERT_REACHED_END \
 bool AR::reached[LX::value<>::size()]; \
 template <size_t N> \
-typename std::enable_if<LX::value<>::size() <= N>::type \
-checkValues() { \
-} \
-template <size_t N> \
-typename std::enable_if<N < LX::value<>::size()>::type \
-checkValues() { \
-    size_t line = LX::value<>::at<N>::result::line(); \
-    const char* msg = LX::value<>::at<N>::result::msg(); \
-    if (AR::reached[N]) { \
-        std::cerr << "Reached: " << msg << " - " << __FILE__ << ":" << line << "\n"; \
-    } else { \
-        std::cerr << "Failed to reach: " << msg << " - " << __FILE__ << ":" << line << "\n"; \
-    } \
+void checkValues() { \
+    LX::value<>::at<N>::result::check(); \
     checkValues<N+1>(); \
+} \
+template <> \
+void checkValues<LX::value<>::size()>() { \
 } \
 AR::~AR() { \
     checkValues<0>(); \
