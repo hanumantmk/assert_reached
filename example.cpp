@@ -3,9 +3,9 @@
 
 #include "assert_reached.h"
 
-ASSERT_REACHED_BEGIN(foo)
+ASSERT_REACHED_BEGIN
 void foo(bool runBranch) {
-    AssertReachedGuard magic{};
+    ASSERT_REACHED_GUARD magic{};
 
     if (runBranch) {
         ASSERT_REACHED("a");
@@ -15,9 +15,9 @@ void foo(bool runBranch) {
 }
 ASSERT_REACHED_END
 
-ASSERT_REACHED_BEGIN(bar)
-void foo(bool runBranch) {
-    AssertReachedGuard magic{};
+ASSERT_REACHED_BEGIN
+void bar(bool runBranch) {
+    ASSERT_REACHED_GUARD magic{};
 
     if (! runBranch) {
         ASSERT_REACHED("c");
@@ -27,20 +27,16 @@ void foo(bool runBranch) {
 }
 ASSERT_REACHED_END
 
-ASSERT_REACHED_BEGIN(baz)
-void foo(bool runBranch) {
-    AssertReachedGuard magic{};
+ASSERT_REACHED_BEGIN
+void baz(bool runBranch) {
+    ASSERT_REACHED_GUARD magic{};
 }
 ASSERT_REACHED_END
 
 int main(int argc, char **argv) {
-    if (argc == 2 && std::string(argv[1]) == "true") {
-        foo::foo(true);
-        bar::foo(true);
-        baz::foo(true);
-    } else {
-        foo::foo(false);
-        bar::foo(false);
-        baz::foo(false);
-    }
+    bool flag = (argc == 2 && std::string(argv[1]) == "true");
+
+    foo(flag);
+    bar(flag);
+    baz(flag);
 }
