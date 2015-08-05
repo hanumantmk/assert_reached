@@ -14,14 +14,14 @@ struct ARLine {
         LX::push<ARLine<__LINE__>>(); \
     } while(0)
 
-#define ASSERT_REACHED_BEGIN \
-namespace { \
+#define ASSERT_REACHED_BEGIN(name) \
+namespace name { \
 struct AR { \
     static bool reached[]; \
     ~AR(); \
 }; \
 using LX = atch::meta_list<class Example>; \
-using C1 = atch::meta_counter<class Example>; \
+using C1 = atch::meta_counter<class Example>;
 
 #define ASSERT_REACHED_END \
 bool AR::reached[C1::value() + 1]; \
