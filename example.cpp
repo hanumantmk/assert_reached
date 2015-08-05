@@ -3,6 +3,8 @@
 
 #include "assert_reached.h"
 
+namespace Foo {
+
 ASSERT_REACHED_BEGIN
 void foo(bool runBranch) {
     ASSERT_REACHED_GUARD magic{};
@@ -33,7 +35,10 @@ void baz(bool runBranch) {
 }
 ASSERT_REACHED_END
 
+}
+
 int main(int argc, char **argv) {
+    using namespace Foo;
     bool flag = (argc == 2 && std::string(argv[1]) == "true");
 
     foo(flag);
