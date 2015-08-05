@@ -35,6 +35,16 @@ void baz(bool runBranch) {
 }
 ASSERT_REACHED_END
 
+ASSERT_REACHED_BEGIN
+ASSERT_REACHED_GUARD multi_magic{};
+void multi1() {
+    ASSERT_REACHED("e");
+}
+void multi2() {
+    ASSERT_REACHED("f");
+}
+ASSERT_REACHED_END
+
 }
 
 int main(int argc, char **argv) {
@@ -44,4 +54,10 @@ int main(int argc, char **argv) {
     foo(flag);
     bar(flag);
     baz(flag);
+
+    if (flag) {
+        multi1();
+    } else {
+        multi2();
+    }
 }
