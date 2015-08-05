@@ -38,5 +38,4 @@ void checkValues<LX::value<>::size()>() { \
 AR::~AR() { \
     checkValues<0>(); \
 } \
-AR magic{}; \
 } \
