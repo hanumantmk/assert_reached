@@ -18,18 +18,6 @@ void foo(bool runBranch) {
 ASSERT_REACHED_END
 
 ASSERT_REACHED_BEGIN
-void bar(bool runBranch) {
-    ASSERT_REACHED_GUARD magic{};
-
-    if (! runBranch) {
-        ASSERT_REACHED("c");
-    } else {
-        ASSERT_REACHED("d");
-    }
-}
-ASSERT_REACHED_END
-
-ASSERT_REACHED_BEGIN
 void baz(bool runBranch) {
     ASSERT_REACHED_GUARD magic{};
 }
@@ -37,11 +25,11 @@ ASSERT_REACHED_END
 
 ASSERT_REACHED_BEGIN
 ASSERT_REACHED_GUARD multi_magic{};
-void multi1() {
-    ASSERT_REACHED("e");
+void multi1(bool flag) {
+    if (flag) ASSERT_REACHED("c");
 }
-void multi2() {
-    ASSERT_REACHED("f");
+void multi2(bool flag) {
+    if (!flag) ASSERT_REACHED("d");
 }
 ASSERT_REACHED_END
 
@@ -52,12 +40,7 @@ int main(int argc, char **argv) {
     bool flag = (argc == 2 && std::string(argv[1]) == "true");
 
     foo(flag);
-    bar(flag);
     baz(flag);
-
-    if (flag) {
-        multi1();
-    } else {
-        multi2();
-    }
+    multi1(flag);
+    multi2(flag);
 }
