@@ -4,6 +4,11 @@
 #include "meta_counter.hpp"
 
 using GLX = atch::meta_list<class Counter>;
+struct GLXHelper {
+    void extra() {
+        GLX::push<void>();
+    }
+};
 
 #define ARG GLX::value<>::at<GLX::value<>::size() - 1>::result
 
@@ -11,6 +16,7 @@ using GLX = atch::meta_list<class Counter>;
     do { \
         struct ARLine {  \
             static void check() { \
+                static_assert(! std::is_same<void, ARG>::value, "ASSERT_REACHED not within ASSERT_REACHED_BEGIN/END"); \
                 if (ARG::reached[ARG::LX::value<>::size()]) { \
                     std::cerr << "Reached: " << str << " - " << __FILE__ << ":" << __LINE__ << "\n"; \
                 } else { \
@@ -55,6 +61,9 @@ check() { \
 }; \
 void ARG::cleanup() { \
     checkValues::check<0>(); \
+    GLX::pop(); \
 }
 
-#define ASSERT_REACHED_GUARD ARG
+#define ASSERT_REACHED_GUARD(name) \
+    static_assert(! std::is_same<void, ARG>::value, "ASSERT_REACHED_GUARD not within ASSERT_REACHED_BEGIN/END"); \
+    ARG name{}
