@@ -19,7 +19,6 @@ void foo(bool runBranch) {
 }
 ASSERT_REACHED_END
 
-ASSERT_REACHED_GUARD(multi_magic);
 void multi1(bool flag) {
     if (flag) ASSERT_REACHED("c");
 }
@@ -29,13 +28,25 @@ void multi2(bool flag) {
 
 }
 
-ASSERT_REACHED_END
-
 int main(int argc, char **argv) {
     using namespace Foo;
     bool flag = (argc == 2 && std::string(argv[1]) == "true");
 
-    foo(flag);
-    multi1(flag);
-    multi2(flag);
+    {
+        ASSERT_REACHED_GUARD(multi_magic);
+    }
+
+    {
+        ASSERT_REACHED_GUARD(multi_magic);
+
+        foo(flag);
+        multi1(flag);
+        multi2(flag);
+    }
+
+    {
+        ASSERT_REACHED_GUARD(multi_magic);
+    }
 }
+
+ASSERT_REACHED_END
