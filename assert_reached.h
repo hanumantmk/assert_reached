@@ -26,6 +26,7 @@ using GLX = atch::meta_list<class Counter>;
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
 
 #define ASSERT_REACHED_BEGIN \
+namespace { \
 struct TOKENPASTE2(AssertReached_, __LINE__) { \
     using LX = atch::meta_list<TOKENPASTE2(AssertReached_, __LINE__)>; \
     ~TOKENPASTE2(AssertReached_, __LINE__)() { cleanup(); } \
@@ -36,6 +37,7 @@ struct TOKENPASTE2(AssertReached_, __LINE__) { \
 }; \
 void TOKENPASTE2(AssertReached_, __LINE__)::extra() { \
     GLX::push<TOKENPASTE2(AssertReached_, __LINE__)>(); \
+} \
 }
 
 #define ASSERT_REACHED_END \
@@ -53,6 +55,6 @@ check() { \
 }; \
 void ARG::cleanup() { \
     checkValues::check<0>(); \
-} \
+}
 
 #define ASSERT_REACHED_GUARD ARG
