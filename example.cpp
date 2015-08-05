@@ -6,9 +6,9 @@
 ASSERT_REACHED_BEGIN(foo)
 void foo(bool runBranch) {
     if (runBranch) {
-        ASSERT_REACHED;
+        ASSERT_REACHED("a");
     } else {
-        ASSERT_REACHED;
+        ASSERT_REACHED("b");
     }
 }
 ASSERT_REACHED_END
@@ -16,9 +16,9 @@ ASSERT_REACHED_END
 ASSERT_REACHED_BEGIN(bar)
 void foo(bool runBranch) {
     if (! runBranch) {
-        ASSERT_REACHED;
+        ASSERT_REACHED("c");
     } else {
-        ASSERT_REACHED;
+        ASSERT_REACHED("d");
     }
 }
 ASSERT_REACHED_END
