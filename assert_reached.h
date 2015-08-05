@@ -6,36 +6,36 @@
     do { \
         struct ARLine {  \
             static void check() { \
-                if (AR::reached[LX::value<>::size()]) { \
+                if (AssertReachedGuard::reached[AssertReachedGuard::LX::value<>::size()]) { \
                     std::cerr << "Reached: " << str << " - " << __FILE__ << ":" << __LINE__ << "\n"; \
                 } else { \
                     std::cerr << "Failed to reach: " << str << " - " << __FILE__ << ":" << __LINE__ << "\n"; \
                 } \
             } \
         }; \
-        AR::reached[LX::value<>::size()] = true; \
-        LX::push<ARLine>(); \
+        AssertReachedGuard::reached[AssertReachedGuard::LX::value<>::size()] = true; \
+        AssertReachedGuard::LX::push<ARLine>(); \
     } while(0)
 
 #define ASSERT_REACHED_BEGIN(name) \
 namespace name { \
-struct AR { \
+struct AssertReachedGuard { \
+    using LX = atch::meta_list<AssertReachedGuard>; \
+    ~AssertReachedGuard(); \
     static bool reached[]; \
-    ~AR(); \
-}; \
-using LX = atch::meta_list<AR>;
+};
 
 #define ASSERT_REACHED_END \
-bool AR::reached[LX::value<>::size()]; \
+bool AssertReachedGuard::reached[AssertReachedGuard::LX::value<>::size()]; \
 template <size_t N> \
 void checkValues() { \
-    LX::value<>::at<N>::result::check(); \
+    AssertReachedGuard::LX::value<>::at<N>::result::check(); \
     checkValues<N+1>(); \
 } \
 template <> \
-void checkValues<LX::value<>::size()>() { \
+void checkValues<AssertReachedGuard::LX::value<>::size()>() { \
 } \
-AR::~AR() { \
+AssertReachedGuard::~AssertReachedGuard() { \
     checkValues<0>(); \
 } \
-} \
+}

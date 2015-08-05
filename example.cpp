@@ -5,7 +5,7 @@
 
 ASSERT_REACHED_BEGIN(foo)
 void foo(bool runBranch) {
-    AR magic{};
+    AssertReachedGuard magic{};
 
     if (runBranch) {
         ASSERT_REACHED("a");
@@ -17,7 +17,7 @@ ASSERT_REACHED_END
 
 ASSERT_REACHED_BEGIN(bar)
 void foo(bool runBranch) {
-    AR magic{};
+    AssertReachedGuard magic{};
 
     if (! runBranch) {
         ASSERT_REACHED("c");
@@ -29,7 +29,7 @@ ASSERT_REACHED_END
 
 ASSERT_REACHED_BEGIN(baz)
 void foo(bool runBranch) {
-    AR magic{};
+    AssertReachedGuard magic{};
 }
 ASSERT_REACHED_END
 
