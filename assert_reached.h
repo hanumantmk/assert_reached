@@ -2,73 +2,127 @@
 
 #include "meta_list.hpp"
 #include <cstring>
+#include <memory>
+#include <vector>
+#include <map>
+#include <iostream>
 
-using GLX = atch::meta_list<class Counter>;
-struct GLXHelper {
-    void extra() {
-        GLX::push<void>();
+struct Root {
+    struct TypeStackMeta {};
+    struct LinesMeta {};
+    using TypeStack = atch::meta_list<TypeStackMeta>;
+    using Lines = atch::meta_list<LinesMeta>;
+
+    struct Guard {
+        Guard(const char* x) :
+            str(x)
+        {
+            id = Root::counter++;
+            Root::table[id] = this;
+        }
+
+        Guard(const Guard& guard) = delete;
+        Guard(Guard&& guard) = delete;
+
+        Guard& operator=(const Guard& guard) = delete;
+        Guard& operator=(Guard&& guard) = delete;
+
+        virtual ~Guard() {
+            Root::table.erase(id);
+        }
+
+        virtual size_t begin() = 0;
+        virtual size_t end() = 0;
+        virtual const char* name() = 0;
+
+        template <typename Line>
+        void invoke() {
+            size_t n = Line::n();
+            if (n < begin() || n >= end()) return;
+            if (lines[n]) {
+                std::cerr << name() << "(" << str << ") Reached: " << Line::str() << " - " << Line::file() << ":" << Line::line() << "\n";
+            } else {
+                std::cerr << name() << "(" << str << ") Failed to reach: " << Line::str() << " - " << Line::file() << ":" << Line::line() << "\n";
+            }
+        }
+
+        void flag(size_t n) {
+            if (n >= begin() && n < end()) {
+                lines[n] = true;
+            }
+        }
+
+        std::map<size_t, bool> lines;
+        const char* str;
+        size_t id;
+    };
+
+    struct details {
+        template <typename T, typename List, size_t N, size_t M>
+        static typename std::enable_if<M <= N>::type
+        apply(T* t) {
+        }
+
+        template <typename T, typename List, size_t N, size_t M>
+        static typename std::enable_if<N < M>::type
+        apply(T* t) {
+            t->template invoke<typename List::template value<>::template at<N>::result>();
+            apply<T, List, N+1, M>(t);
+        }
+
+        template <typename T, typename List>
+        static void applyToList(T* t) {
+            apply<T, List, 0, List::template value<>::size()>(t);
+        }
+    };
+
+    static void flag(size_t n) {
+        for (auto&& it : table) {
+            it.second->flag(n);
+        }
     }
+
+    static size_t counter;
+    static std::map<size_t, Root::Guard*> table;
 };
 
-#define ARG GLX::value<>::at<GLX::value<>::size() - 1>::result
+size_t Root::counter;
+std::map<size_t, Root::Guard*> Root::table;
 
-#define ASSERT_REACHED(str) \
+#define ASSERT_REACHED(msg) \
     do { \
         struct ARLine {  \
-            static void check() { \
-                static_assert(! std::is_same<void, ARG>::value, "ASSERT_REACHED not within ASSERT_REACHED_BEGIN/END"); \
-                if (ARG::reached[ARG::LX::value<>::size()]) { \
-                    std::cerr << "Reached: " << str << " - " << __FILE__ << ":" << __LINE__ << "\n"; \
-                } else { \
-                    std::cerr << "Failed to reach: " << str << " - " << __FILE__ << ":" << __LINE__ << "\n"; \
-                } \
-            } \
+            static const char* str() { return msg; } \
+            static const char* file() { return __FILE__; } \
+            static size_t line() { return __LINE__; } \
+            static size_t n() { return Root::Lines::value<>::size(); } \
         }; \
-        ARG::reached[ARG::LX::value<>::size()] = true; \
-        ARG::LX::push<ARLine>(); \
+        static_assert(Root::TypeStack::value<>::size(), "ASSERT_REACHED not within ASSERT_REACHED_BEGIN/END"); \
+        Root::flag(Root::Lines::value<>::size()); \
+        Root::Lines::push<ARLine>(); \
     } while(0)
 
-#define TOKENPASTE(x, y) x ## y
-#define TOKENPASTE2(x, y) TOKENPASTE(x, y)
-
-#define ASSERT_REACHED_BEGIN \
+#define ASSERT_REACHED_BEGIN(type) \
 namespace { \
-struct TOKENPASTE2(AssertReached_, __LINE__) { \
-    using LX = atch::meta_list<TOKENPASTE2(AssertReached_, __LINE__)>; \
-    TOKENPASTE2(AssertReached_, __LINE__)() { init(); } \
-    ~TOKENPASTE2(AssertReached_, __LINE__)() { cleanup(); } \
-    static bool reached[]; \
-    struct checkValues; \
+struct type : public Root::Guard { \
+    type(const char* x) : Root::Guard(x) {}\
+    ~type() override { cleanup(); } \
+    size_t begin() override { return Root::Lines::value<>::size(); }; \
+    size_t end() override; \
+    const char* name() override { return #type; } \
     void cleanup(); \
-    void init(); \
-    void extra(); \
+    void extra() { \
+        Root::TypeStack::push<type>(); \
+    } \
 }; \
-void TOKENPASTE2(AssertReached_, __LINE__)::extra() { \
-    GLX::push<TOKENPASTE2(AssertReached_, __LINE__)>(); \
-} \
 }
+
+#define ARG Root::TypeStack::value<>::at<Root::TypeStack::value<>::size() - 1>::result
 
 #define ASSERT_REACHED_END \
-bool ARG::reached[ARG::LX::value<>::size()]; \
-struct ARG::checkValues { \
-template <size_t N> \
-static typename std::enable_if<LX::value<>::size() <= N>::type \
-check() {} \
-template <size_t N> \
-static typename std::enable_if<N < LX::value<>::size()>::type \
-check() { \
-    LX::value<>::at<N>::result::check(); \
-    check<N+1>(); \
-} \
-}; \
-void ARG::init() { \
-    std::memset(reached, 0, sizeof(reached)); \
-} \
+static_assert(Root::TypeStack::value<>::size(), "ASSERT_REACHED_END not matched with ASSERT_REACHED_BEGIN"); \
+size_t ARG::end() { return Root::Lines::value<>::size(); } \
 void ARG::cleanup() { \
-    checkValues::check<0>(); \
-    GLX::pop(); \
+    Root::details::applyToList<ARG, Root::Lines>(this); \
+    Root::TypeStack::pop(); \
 }
-
-#define ASSERT_REACHED_GUARD(name) \
-    static_assert(! std::is_same<void, ARG>::value, "ASSERT_REACHED_GUARD not within ASSERT_REACHED_BEGIN/END"); \
-    ARG name{}
