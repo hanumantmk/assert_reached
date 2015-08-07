@@ -1,5 +1,0 @@
-Terrible abuse of C++14 to enable an ASSERT_REACHED macro
-
-...
-
-Takes advantage of: http://b.atch.se/posts/constexpr-meta-container/
